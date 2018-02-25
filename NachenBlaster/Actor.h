@@ -108,42 +108,54 @@ public:
     ExtraLifeGoodie(double startX, double startY);
 };
 
-//class Character: public Actor
-//{
-//public:
-//    Character();
-//    virtual void doSomething();
-//    StudentWorld * getWorld() const;
-//    void setWorld(StudentWorld *world);
-//    void setTorpedoCount(int num);
-//    int getTorpedoCount() const;
-//    void setAmmoCount(int count);
-//    int getAmmoCount() const;
-//
-//private:
-//    static const int CABBAGE = 1, TURNIP = 2, TORPEDO = 3;
-//    int hp, ammoCount, torpedoCount;
-//    StudentWorld * world;
-//    void fire(Projectile * projectile, int type);
-//};
+class Character
+{
+public:
+    Character(int ammoCount, int torpedoCount, int hp);
+    StudentWorld * getWorld() const;
+    virtual void setWorld(StudentWorld *world);
+    void setTorpedoCount(int num);
+    int getTorpedoCount() const;
+    void setAmmoCount(int count);
+    int getAmmoCount() const;
+    void fire(Projectile * projectile, int type);
+    
+protected:
+    static const int CABBAGE = 1, TURNIP = 2, TORPEDO = 3;
 
-class NachenBlaster: public Actor //change to Character
+private:
+    int hp, ammoCount, torpedoCount;
+    StudentWorld * world;
+};
+
+class NachenBlaster: public Actor, public Character //change to Character
 {
 public:
     NachenBlaster();
     virtual void doSomething();
-    StudentWorld * getWorld() const;
-    void setWorld(StudentWorld *world);
-    void setTorpedoCount(int num);
-    int getTorpedoCount() const;
+    //virtual void setWorld(StudentWorld * world);
+//    StudentWorld * getWorld() const;
+//    void setWorld(StudentWorld *world);
+//    void setTorpedoCount(int num);
+//    int getTorpedoCount() const;
     
 private:
-    static const int POS_MOVEMENT = 6, NEG_MOVEMENT = -6, CABBAGE = 1, TURNIP = 2, TORPEDO = 3;
-    int hp, cabbageEP, numTorpedoes;
-    StudentWorld * world;
+    static const int POS_MOVEMENT = 6, NEG_MOVEMENT = -6;//, CABBAGE = 1, TURNIP = 2, TORPEDO = 3;
+    //int hp, cabbageEP, numTorpedoes;
+    //StudentWorld * world;
     void moveX(int movement);
     void moveY(int movement);
-    void fire(Projectile *projectile, int type);
+    //void fire(Projectile *projectile, int type);
 };
+
+class Alien: public Character, public FloatingObject
+{
+public:
+    Alien();
+private:
+    
+}
+
+
 
 #endif // ACTOR_H_

@@ -55,9 +55,62 @@ void Explosion::doSomething()
     numOfTicks++;
 }
 
+Character::Character(int ammoCount, int torpedoCount, int hp):
+hp(hp), ammoCount(ammoCount), torpedoCount(torpedoCount)
+{
+}
+
+void Character::setWorld(StudentWorld * world)
+{
+    this->world = world;
+}
+
+StudentWorld * Character::getWorld() const
+{
+    return world;
+}
+
+void Character::setTorpedoCount(int num)
+{
+    torpedoCount = num;
+}
+
+int Character::getTorpedoCount() const
+{
+    return torpedoCount;
+}
+
+void Character::setAmmoCount(int num)
+{
+    ammoCount = num;
+}
+
+int Character::getAmmoCount() const
+{
+    return ammoCount;
+}
+
+void Character::fire(Projectile  * projectile, int type)
+{
+    StudentWorld * world = getWorld();
+    world->addActor(*projectile);
+    
+    switch (type)
+    {
+        case CABBAGE:
+            world->playSound(SOUND_PLAYER_SHOOT);
+            break;
+        case TURNIP:
+            world->playSound(SOUND_ALIEN_SHOOT);
+            break;
+        case TORPEDO:
+            world->playSound(SOUND_TORPEDO);
+            break;
+    }
+}
 
 NachenBlaster::NachenBlaster():
-Actor(IID_NACHENBLASTER, 0, 128), hp(50), cabbageEP(30), numTorpedoes(0)
+Actor(IID_NACHENBLASTER, 0, 128), Character(30, 0, 50)  //hp(50), cabbageEP(30), numTorpedoes(0)
 {
 }
 
@@ -66,7 +119,6 @@ void NachenBlaster::doSomething()
     if(!getState())
         return;
     
-    cabbageEP++;
     int key;
     if(getWorld()->getKey(key))
     {
@@ -74,7 +126,7 @@ void NachenBlaster::doSomething()
         {
             case KEY_PRESS_SPACE:
                 fire(new Cabbage(getX() + 12, getY()), CABBAGE);
-                cabbageEP -= 5;
+                setAmmoCount(getAmmoCount() - 5);
                 break;
             case KEY_PRESS_TAB:
                 //fire a torpedo
@@ -94,7 +146,7 @@ void NachenBlaster::doSomething()
                 break;
         }
     }
-    if(cabbageEP < 30) cabbageEP++;
+    if(getAmmoCount() < 30) setAmmoCount(getAmmoCount() + 1);
 }
 
 void NachenBlaster::moveX(int movement)
@@ -109,44 +161,49 @@ void NachenBlaster::moveY(int movement)
         moveTo(getX(), getY() + movement);
 }
 
-void NachenBlaster::setWorld(StudentWorld * world)
-{
-    this->world = world;
-}
+//void NachenBlaster::setWorld(StudentWorld * world)
+//{
+//    
+//}
 
-StudentWorld * NachenBlaster::getWorld() const
-{
-    return world;
-}
-
-void NachenBlaster::setTorpedoCount(int num)
-{
-    numTorpedoes = num;
-}
-
-int NachenBlaster::getTorpedoCount() const
-{
-    return numTorpedoes;
-}
-
-void NachenBlaster::fire(Projectile  * projectile, int type)
-{
-    StudentWorld * world = getWorld();
-    world->addActor(*projectile);
-    
-    switch (type)
-    {
-        case CABBAGE:
-            world->playSound(SOUND_PLAYER_SHOOT);
-            break;
-        case TURNIP:
-            world->playSound(SOUND_ALIEN_SHOOT);
-            break;
-        case TORPEDO:
-            world->playSound(SOUND_TORPEDO);
-            break;
-    }
-}
+//void NachenBlaster::setWorld(StudentWorld * world)
+//{
+//    this->world = world;
+//}
+//
+//StudentWorld * NachenBlaster::getWorld() const
+//{
+//    return world;
+//}
+//
+//void NachenBlaster::setTorpedoCount(int num)
+//{
+//    numTorpedoes = num;
+//}
+//
+//int NachenBlaster::getTorpedoCount() const
+//{
+//    return numTorpedoes;
+//}
+//
+//void NachenBlaster::fire(Projectile  * projectile, int type)
+//{
+//    StudentWorld * world = getWorld();
+//    world->addActor(*projectile);
+//
+//    switch (type)
+//    {
+//        case CABBAGE:
+//            world->playSound(SOUND_PLAYER_SHOOT);
+//            break;
+//        case TURNIP:
+//            world->playSound(SOUND_ALIEN_SHOOT);
+//            break;
+//        case TORPEDO:
+//            world->playSound(SOUND_TORPEDO);
+//            break;
+//    }
+//}
 
 FloatingObject::FloatingObject(int imageID, double startX, double startY, int dir):
     Actor(imageID, startX, startY, dir, 0.5, 1)
