@@ -2,6 +2,10 @@
 #include "GameConstants.h"
 #include "Actor.h"
 #include <string>
+#include <sstream>
+#include <iomanip>
+#include <iostream>
+#include <math.h>
 using namespace std;
 
 GameWorld* createStudentWorld(string assetDir)
@@ -25,12 +29,16 @@ StudentWorld::~StudentWorld()
 
 int StudentWorld::init()
 {
-    nachenBlaster = new NachenBlaster();
-    nachenBlaster->setWorld(this);
+    nachenBlaster = new NachenBlaster(this);
     actors.push_back(nachenBlaster);
     
+    numDestroyedAliens = 0;
+    numCurrentAliens = 0;
+    numAliensOnScreen = 0;
+    
+    
     for(int i = 0; i < 30; i++)
-        actors.push_back(new Star(randInt(0, VIEW_WIDTH-1),randInt(0, VIEW_HEIGHT-1)));
+        actors.push_back(new Star(this, randInt(0, VIEW_WIDTH-1),randInt(0, VIEW_HEIGHT-1)));
     return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -40,8 +48,10 @@ int StudentWorld::move()
     // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
     //decLives();
     
+    
     if(randInt(1, 15) == 3)
-        actors.push_back(new Star(VIEW_WIDTH-1,randInt(0, VIEW_HEIGHT-1)));
+        actors.push_back(new Star(this, VIEW_WIDTH-1,randInt(0, VIEW_HEIGHT-1)));
+    addAlien();
     for(vector<Actor *>::iterator iter = actors.begin(); iter != actors.end(); iter++)
     {
         if((*iter)->getState())
@@ -50,10 +60,12 @@ int StudentWorld::move()
         
             if(!nachenBlaster->getState())
             {
-                //decLives(); do i do this??
+                decLives();
                 return GWSTATUS_PLAYER_DIED;
             }
-            //if # of alien ships destoryed is enough increaseScore()    return GWSTATUS_FINISHED_LEVEL;
+            
+            if(numDestroyedAliens >= 6 + 4*getLevel())
+                return GWSTATUS_FINISHED_LEVEL;
         }
     }
     
@@ -61,6 +73,8 @@ int StudentWorld::move()
     {
         if(!(*iter)->getState())
         {
+            if((*iter)->isAlien())
+                numAliensOnScreen--;
             delete *iter;
             iter = actors.erase(iter);
         }
@@ -68,10 +82,69 @@ int StudentWorld::move()
             iter++;
     }
     
-    //update status test on the top screen
+    updateDisplayText();
     
     return GWSTATUS_CONTINUE_GAME;
     //return GWSTATUS_PLAYER_DIED;
+}
+
+void StudentWorld::addAlien()
+{
+    int r = (6 + 4 * getLevel()) - numDestroyedAliens;
+    int m = 4 + (0.5 * getLevel());
+    
+    if(numAliensOnScreen < min(m, r))
+    {
+        int s1 = 60, s2 = 20 + getLevel()*5, s3 = 5 + getLevel()*10;
+        int s = s1 + s2 + s3;
+        int rand = randInt(1, s);
+        
+        if(rand >= 1 && rand <= s1)
+            actors.push_back(new Smallgon(this, VIEW_WIDTH - 1, randInt(0, VIEW_HEIGHT - 1)));
+        
+        else if(rand > s1 && rand <= s1 + s2)
+            actors.push_back(new Smoregon(this, VIEW_WIDTH - 1, randInt(0, VIEW_HEIGHT - 1)));
+        
+        else
+            actors.push_back(new Snagglegon(this, VIEW_WIDTH - 1, randInt(0, VIEW_HEIGHT - 1)));
+        
+        numCurrentAliens++;
+        numAliensOnScreen++;
+    }
+}
+
+Alien * StudentWorld::getOneCollidingAlien(const Actor* a) const
+{
+    double dis = 0;
+    for(int i = 0; i < actors.size(); i++)
+    {
+        if(actors[i]->isAlien())
+        {
+            dis = sqrt( pow(actors[i]->getX() - a->getX(), 2) +  pow(actors[i]->getY() - a->getY(), 2));
+            if(dis < 0.75 * (actors[i]->getRadius() + a->getRadius()))
+                return dynamic_cast<Alien*>(actors[i]);
+        }
+    }
+    
+    return nullptr;
+}
+
+NachenBlaster * StudentWorld::getCollidingPlayer(const Actor* a) const
+{
+    double dis = sqrt( pow(nachenBlaster->getX() - a->getX(), 2) +  pow(nachenBlaster->getY() - a->getY(), 2));
+    
+    if(dis < 0.75 * (nachenBlaster->getRadius() + a->getRadius()))
+        return nachenBlaster;
+    
+    return nullptr;
+}
+
+void StudentWorld::updateDisplayText()
+{
+    ostringstream oss;
+    oss << "Lives: " << getLives() << "  Health: " << nachenBlaster->getHPPercentage() << "%  Score: " << getScore() << "  Level: " ;
+    oss << getLevel() << "  Cabbages: " << nachenBlaster->getAmmoPercentage() <<"%  Torpedoes: " << nachenBlaster->getTorpedoCount();
+    setGameStatText(oss.str());
 }
 
 void StudentWorld::cleanUp()
@@ -88,7 +161,19 @@ void StudentWorld::cleanUp()
     }
 }
 
-void StudentWorld::addActor(Actor &actor)
+void StudentWorld::addActor(Actor * actor)
 {
-    actors.push_back(&actor);
+    actors.push_back(actor);
+}
+
+bool StudentWorld::isNachenInLineOfFire(const Actor * a) const
+{
+    if(nachenBlaster->getX() < a->getX() && a->getY() <= nachenBlaster->getY() + 4 && a->getY() >= nachenBlaster->getY() - 4 )
+        return true;
+    return false;
+}
+
+void StudentWorld::recordAlienDying()
+{
+    numDestroyedAliens++;
 }
